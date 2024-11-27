@@ -110,7 +110,7 @@ if st.button("Submit"):
     input_data = torch.tensor(movie_encoded.values).float()
     
     model = MovieModel() 
-    state_dict = torch.load("model0.pth")
+    state_dict = torch.load("models/model0.pth")
     model.load_state_dict(state_dict)
     model.eval()
     prediction = model(input_data)

@@ -108,8 +108,8 @@ def test_model(model, test_loader):
 #%%
 if __name__ == "__main__": 
     
-    df = pd.read_csv("data_continuous.csv", index_col=0)
-    #df = pd.read_csv("data_nonlog.csv", index_col=0)
+    df = pd.read_csv("data/data_continuous.csv", index_col=0)
+    #df = pd.read_csv("data/data_nonlog.csv", index_col=0)
 
 
     X = df[['vote_average', 'budget_adj', 'runtime', 'genres', 'season', 'rating']]
