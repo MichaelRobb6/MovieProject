@@ -120,6 +120,7 @@ if st.button("Submit"):
     st.write(movie_encoded)
     st.write(torch.exp(prediction).item())
 
+    formated_val = '{:,}'.format(torch.exp(prediction).item())
     # Example placeholder for model prediction or processing
     # Replace this with your actual model code
-    st.success(f'Your movie is expected to make ${torch.exp(prediction).item()}')
+    st.success(f'Your movie is expected to make ${formated_val}')
