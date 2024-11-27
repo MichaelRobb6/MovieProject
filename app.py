@@ -118,9 +118,8 @@ if st.button("Submit"):
     # Simulate passing data to a model
     st.subheader("Submitted Data")
     st.write(movie_encoded)
-    st.write(movie_encoded.dtypes)
     st.write(torch.exp(prediction).item())
 
     # Example placeholder for model prediction or processing
     # Replace this with your actual model code
-    st.success("Data has been sent to the model for processing!")
+    st.success(f'Your movie is expected to make ${torch.exp(prediction).item()}')
