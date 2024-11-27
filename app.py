@@ -6,7 +6,7 @@ from sklearn.preprocessing import OrdinalEncoder
 from NNModel import MovieModel
 
 # Title
-st.title("Movie Characteristics Input App")
+st.title("Movie Revenue Prediction")
 
 # Input: Budget
 budget = st.number_input("Enter the movie budget (in millions):", min_value=0.0, step=0.01)
