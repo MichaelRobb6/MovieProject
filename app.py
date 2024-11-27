@@ -1,7 +1,7 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
-#import torch
+import torch
 from sklearn.preprocessing import OrdinalEncoder
 from NNModel import MovieModel
 
