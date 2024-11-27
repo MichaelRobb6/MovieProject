@@ -117,7 +117,7 @@ if st.button("Submit"):
     
     # Simulate passing data to a model
     st.subheader("Submitted Data")
-    st.write(movie_encoded)
+    #st.write(movie_encoded)
     #st.write(torch.exp(prediction).item())
 
     #formated_val = '{:,}'.format(torch.exp(prediction).item())
