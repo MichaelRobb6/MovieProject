@@ -117,11 +117,11 @@ if st.button("Submit"):
     
     # Simulate passing data to a model
     st.subheader("Submitted Data")
-    #st.write(movie_encoded)
+    st.write(movie_encoded)
     #st.write(torch.exp(prediction).item())
 
-    #formated_val = '{:,}'.format(torch.exp(prediction).item())
+    formated_val = '{:,}'.format(torch.exp(prediction).item())
     # Example placeholder for model prediction or processing
     # Replace this with your actual model code
-    st.success('You suck mad butt and your idea for a New Girl movie would stink. I know that\'s what you wanted to make')
-    # st.success(f'Your movie is expected to make ${formated_val}')
+    # st.success('You suck mad butt and your idea for a New Girl movie would stink. I know that\'s what you wanted to make')
+    st.success(f'Your movie is expected to make ${formated_val}')
