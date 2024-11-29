@@ -98,9 +98,7 @@ if __name__ == "__main__":
 
     X_enc = dm.x_data_encoding(X)
      
-    train_loader, test_loader = dm.make_data_loader(X_enc, y)
-
-    
+    train_loader, test_loader = dm.make_data_loaderkjhboiljbn(X_enc, y)
     nn_model = MovieModel().to(device)    
     criterion = nn.MSELoss()
     optimizer = torch.optim.Adam(nn_model.parameters(), lr=0.001)
