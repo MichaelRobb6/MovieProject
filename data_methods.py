@@ -1,18 +1,24 @@
 import pandas as pd
+import numpy as np
 import torch
 from torch.utils.data import DataLoader, TensorDataset
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MultiLabelBinarizer, OrdinalEncoder, OneHotEncoder
 
-def x_data_encoding(X):
+def x_data_prep(X, transform):
+    
+    if transform == "log":
+        X['budget_adj'] = np.log(X['budget_adj'])
         
-    # Data Encoding
+    if transform == "log10":  
+        X['budget_adj'] = np.log10(X['budget_adj'])
+        
+    # Onehot encode the 'season' column
     X['genres_list'] = X['genres'].str.split(', ')
     mlb = MultiLabelBinarizer()
     genres_encoded = mlb.fit_transform(X['genres_list'])
     genres_X = pd.DataFrame(genres_encoded, columns=mlb.classes_, index=X.index)
     X = pd.concat([X, genres_X], axis=1).drop(columns=['genres', 'genres_list'])
-    
 
     # Onehot encode the 'season' column
     X['season'] = X['season'].str.strip()
@@ -29,6 +35,16 @@ def x_data_encoding(X):
     X = pd.concat([X.drop(columns=['rating']), rating_encoded_df], axis=1)
     
     return X
+
+def y_data_prep(y, transform):
+    
+    if transform == "log":
+        y = np.log(y)
+        
+    if transform == "log10":  
+        y = np.log10(y)
+
+    return y
 
 def make_data_loader(X, y):
     
