@@ -86,11 +86,10 @@ def train_model(model, train_loader):
         total_correct += (predictions == labels).sum().item()
         total_samples += labels.size(0)
         
-        
         total_loss += loss.item()
     
     average_loss = total_loss / len(train_loader)
-    accuracy = total_correct / total_samples * 100  # Accuracy in percentage
+    accuracy = total_correct / total_samples * 100 
     
     return average_loss, accuracy
 
