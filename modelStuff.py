@@ -11,16 +11,16 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 class MovieModel(nn.Module):
     def __init__(self, output_size):
         super().__init__()
-        self.layer_1 = nn.Linear(32, 64)
-        self.layer_2 = nn.Linear(64, 64)
+        self.layer_1 = nn.Linear(33, 64)
+        #self.layer_2 = nn.Linear(128, 64)
         self.output = nn.Linear(64, output_size)
         self.dropout = nn.Dropout(0)
         self.activation = torch.sigmoid
         
     def forward(self, x):
         x = self.activation(self.layer_1(x))
-        x = self.dropout(x)
-        x = self.activation(self.layer_2(x))
+        #x = self.dropout(x)
+        #x = self.activation(self.layer_2(x))
         x = self.output(x)
         return x
 
@@ -95,7 +95,7 @@ def train_test(output_size, train_loader, test_loader):
     train_percs = []
     test_percs = []
     
-    weight_decay = 0.000001
+    weight_decay = 0.00001
     
     nn_model = MovieModel(output_size).to(device)  
     nn_model.set_dropout_rate(0.2)  
@@ -105,7 +105,7 @@ def train_test(output_size, train_loader, test_loader):
 
     
     # Perform training loop
-    epochs = 50
+    epochs = 100
     for epoch in range(epochs):
         train_loss, train_perc = train_model(nn_model, train_loader, criterion, optimizer)
         test_loss, test_perc = test_model(nn_model, test_loader, criterion)

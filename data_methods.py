@@ -8,8 +8,8 @@ from sklearn.preprocessing import MultiLabelBinarizer, StandardScaler, OneHotEnc
 def x_data_prep(X):
     
     # Separate categorical and continuous features
-    X_cat = X[['genres', 'season', 'rating']].copy()
-    X_cont = X[['vote_average', 'budget_adj', 'runtime']].copy()
+    X_cat = X[['genres', 'season', 'rating', 'original_language' ]].copy()
+    X_cont = X[['vote_average', 'budget_adj', 'runtime', 'year']].copy()
     
     # Apply log transformation to 'budget_adj'
     X_cont['budget_adj'] = np.log10(X_cont['budget_adj'].replace(0, np.nan)).fillna(0)
@@ -27,6 +27,17 @@ def x_data_prep(X):
     mlb = MultiLabelBinarizer()
     genres_encoded = mlb.fit_transform(X_cat['genres_list'])
     genres_df = pd.DataFrame(genres_encoded, columns=mlb.classes_, index=X.index)
+
+    # One-hot encode the 'season' column
+    X_cat['original_language'] = X_cat['original_language'].str.strip()
+    onehot_encoder_ol = OneHotEncoder(sparse_output=False, dtype=int)
+    ol_encoded = onehot_encoder_ol.fit_transform(X_cat[['original_language']])
+    ol_df = pd.DataFrame(
+        ol_encoded, 
+        columns=onehot_encoder_ol.get_feature_names_out(['original_language']), 
+        index=X.index
+    )
+    ol_df = ol_df['original_language_en']
 
     # One-hot encode the 'season' column
     X_cat['season'] = X_cat['season'].str.strip()
@@ -49,7 +60,7 @@ def x_data_prep(X):
     )
 
     # Combine all features: normalized continuous + one-hot encoded categorical
-    X_final = pd.concat([X_norm, genres_df, season_df, rating_df], axis=1)
+    X_final = pd.concat([X_norm, genres_df, season_df, rating_df, ol_df], axis=1)
     
     return X_final
 
@@ -74,8 +85,13 @@ def normalize_data(X):
 def make_data_loader(X, y):
     
     # Train Test Split
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=17)
 
+    X_train.describe()
+    X_test.describe()
+    y_train.describe()
+    y_test.describe()
+    
     x_train_tensor = torch.tensor(X_train.values, dtype=torch.float32)
     x_test_tensor = torch.tensor(X_test.values, dtype=torch.float32)
     y_train_tensor = torch.tensor(y_train.values, dtype=torch.long)
