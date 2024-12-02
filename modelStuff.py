@@ -103,22 +103,23 @@ def train_test(input_size, output_size, train_loader, test_loader, method):
     train_percs = []
     test_percs = []
     
-    weight_decay = 0.0000
+    weight_decay = 0.0001
     
     if method == 'r':
         #criterion = nn.MSELoss()
-        criterion = nn.HuberLoss(delta=1.0)
+        criterion = nn.HuberLoss(delta=0.5)
     else:
         criterion = nn.CrossEntropyLoss()
 
     nn_model = MovieModel(input_size, output_size, method).to(device)  
     #nn_model.set_dropout_rate(0.2)  
-    optimizer = torch.optim.Adam(nn_model.parameters(), lr=0.001, weight_decay=weight_decay)
+    optimizer = torch.optim.SGD(nn_model.parameters(), lr=0.01)
+    #optimizer = torch.optim.Adam(nn_model.parameters(), lr=0.001, weight_decay=weight_decay)
     scheduler = StepLR(optimizer, step_size=10, gamma=1)
 
     
     # Perform training loop
-    epochs = 50
+    epochs = 200
     for epoch in range(epochs):
         train_loss, train_perc = train_model(nn_model, train_loader, criterion, optimizer)
         test_loss, test_perc = test_model(nn_model, test_loader, criterion)
