@@ -9,19 +9,29 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 #%%
 # New NN Model
 class MovieModel(nn.Module):
-    def __init__(self, output_size):
+    def __init__(self, input_size, output_size, method):
         super().__init__()
-        self.layer_1 = nn.Linear(33, 64)
-        #self.layer_2 = nn.Linear(128, 64)
+        self.layer_1 = nn.Linear(input_size, 64)
+        self.layer_2 = nn.Linear(64, 64)
         self.output = nn.Linear(64, output_size)
-        self.dropout = nn.Dropout(0)
-        self.activation = torch.sigmoid
-        
+        self.dropout = nn.Dropout(0.3)
+        self.method = method
+        self.relu = nn.ReLU()
+        self.sigmoid = nn.Sigmoid()
+
+    
     def forward(self, x):
-        x = self.activation(self.layer_1(x))
-        #x = self.dropout(x)
-        #x = self.activation(self.layer_2(x))
-        x = self.output(x)
+        if self.method == 'p' or self.method == 'b':
+            x = self.sigmoid(self.layer_1(x))
+            x = self.dropout(x)
+            x = self.sigmoid(self.layer_2(x))
+            x = self.dropout(x)
+            x = self.output(x)
+        elif self.method =='r':
+            x = self.relu(self.layer_1(x))
+            x = self.dropout(x)
+            x = self.relu(self.layer_2(x))
+            x = self.output(x)
         return x
 
     def set_dropout_rate(self, dr):
@@ -53,8 +63,6 @@ def train_model(model, train_loader, criterion, optimizer):
         # Perform back propogation and step
         loss.backward()
         optimizer.step()
-        
-        
     
     average_loss = total_loss / len(train_loader)
     accuracy = total_correct / total_samples * 100 
@@ -88,24 +96,29 @@ def test_model(model, test_loader, criterion):
     return average_loss, accuracy
 
 
-def train_test(output_size, train_loader, test_loader):
+def train_test(input_size, output_size, train_loader, test_loader, method):
 
     train_losses = []
     test_losses = []
     train_percs = []
     test_percs = []
     
-    weight_decay = 0.00001
+    weight_decay = 0.0000
     
-    nn_model = MovieModel(output_size).to(device)  
-    nn_model.set_dropout_rate(0.2)  
-    criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(nn_model.parameters(), lr=0.01, weight_decay=weight_decay)
+    if method == 'r':
+        #criterion = nn.MSELoss()
+        criterion = nn.HuberLoss(delta=1.0)
+    else:
+        criterion = nn.CrossEntropyLoss()
+
+    nn_model = MovieModel(input_size, output_size, method).to(device)  
+    #nn_model.set_dropout_rate(0.2)  
+    optimizer = torch.optim.Adam(nn_model.parameters(), lr=0.001, weight_decay=weight_decay)
     scheduler = StepLR(optimizer, step_size=10, gamma=1)
 
     
     # Perform training loop
-    epochs = 100
+    epochs = 50
     for epoch in range(epochs):
         train_loss, train_perc = train_model(nn_model, train_loader, criterion, optimizer)
         test_loss, test_perc = test_model(nn_model, test_loader, criterion)
@@ -124,6 +137,7 @@ def train_test(output_size, train_loader, test_loader):
         print("-"*20)
 
 
+    #plt.ylim((0,2))
     plt.ylabel("MSE")
     plt.xlabel("Epochs")
     plt.plot(range(epochs), train_losses, label="Train Loss")

@@ -4,6 +4,7 @@ import torch
 from torch.utils.data import DataLoader, TensorDataset
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MultiLabelBinarizer, StandardScaler, OneHotEncoder
+from sklearn.decomposition import PCA
 
 def x_data_prep(X):
     
@@ -62,40 +63,54 @@ def x_data_prep(X):
     # Combine all features: normalized continuous + one-hot encoded categorical
     X_final = pd.concat([X_norm, genres_df, season_df, rating_df, ol_df], axis=1)
     
-    return X_final
+    n_components = 5
+    pca = PCA(n_components=n_components)  # Adjust n_components as needed
+    X_pca = pca.fit_transform(X_final)
+    
+    return X_pca, n_components
 
 def y_data_prep(y, method):
     
     if method == 'p':
         y_enc = (y['revenue_adj'] > y['budget_adj']).astype(int)
         output_size = 2
-    else:
+    elif method == 'b':
         num_bins = 10
         y_log = np.log10(y['revenue_adj'].replace(0, np.nan)).fillna(0)
         y_enc, bins = pd.qcut(y_log, q=num_bins, labels=False, retbins=True)
         output_size = len(bins) - 1
-        
+    elif method =='r':
+        y_log = np.log(y['revenue_adj'])
+        y_enc = normalize_data(y_log)
+        output_size = 1
     return y_enc, output_size
 
 def normalize_data(X):
+    
+    if isinstance(X, pd.Series):
+        X = X.to_frame()
+    
     scaler = StandardScaler()
     X_scaled = pd.DataFrame(scaler.fit_transform(X), columns=X.columns, index=X.index)
     return X_scaled
 
-def make_data_loader(X, y):
+def make_data_loader(X, y, method):
     
     # Train Test Split
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=17)
-
-    X_train.describe()
-    X_test.describe()
-    y_train.describe()
-    y_test.describe()
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=79213)
     
-    x_train_tensor = torch.tensor(X_train.values, dtype=torch.float32)
-    x_test_tensor = torch.tensor(X_test.values, dtype=torch.float32)
-    y_train_tensor = torch.tensor(y_train.values, dtype=torch.long)
-    y_test_tensor = torch.tensor(y_test.values, dtype=torch.long)
+    if method == 'r':
+        y_train_tensor = torch.tensor(y_train.values, dtype=torch.float32)
+        y_test_tensor = torch.tensor(y_test.values, dtype=torch.float32)
+        x_train_tensor = torch.tensor(X_train, dtype=torch.float32)
+        x_test_tensor = torch.tensor(X_test, dtype=torch.float32)
+    else:
+        y_train_tensor = torch.tensor(y_train.values, dtype=torch.long)
+        y_test_tensor = torch.tensor(y_test.values, dtype=torch.long)
+        
+        x_train_tensor = torch.tensor(X_train.values, dtype=torch.float32)
+        x_test_tensor = torch.tensor(X_test.values, dtype=torch.float32)
+
     
     # Combine features and labels into a dataset
     train_dataset = TensorDataset(x_train_tensor, y_train_tensor)
