@@ -108,7 +108,7 @@ def test_model(model, test_loader, criterion, method):
     return average_loss, accuracy
 
 
-def train_test(input_size, output_size, train_loader, test_loader, method, epochs, weight_decay, lr, gamma):
+def train_test(input_size, output_size, train_loader, test_loader, method, epochs, weight_decay, lr, gamma, delta):
 
     train_losses = []
     test_losses = []
@@ -125,9 +125,9 @@ def train_test(input_size, output_size, train_loader, test_loader, method, epoch
     if method == 'r':
         #criterion = nn.MSELoss()
         #weight_decay = 0.001
-        criterion = nn.HuberLoss(delta=0.5)
+        criterion = nn.HuberLoss()
         optimizer = torch.optim.Adam(nn_model.parameters(), lr=lr, weight_decay=weight_decay)
-        scheduler = StepLR(optimizer, step_size=20, gamma=gamma)
+        scheduler = StepLR(optimizer, step_size=10, gamma=gamma)
 
     elif method == 'p':
         #weight_decay = 0.001
@@ -184,7 +184,7 @@ def train_test(input_size, output_size, train_loader, test_loader, method, epoch
     plt.title(f"{method.capitalize()} Model Loss\n{param_caption}")
 
     if method == 'r':
-        plt.ylabel("Huber Loss")
+        plt.ylabel(f"Huber Loss delta={delta}")
         #plt.title("Regression Model Huber Loss") 
 
     if method == 'p':

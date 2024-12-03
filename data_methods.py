@@ -151,7 +151,7 @@ def make_data_loader(X, y, method):
 
     return train_loader, test_loader
 
-def downsample_data(X, y):
+def downsample_data(X, y, random_state=21321):
 
     # Convert input to DataFrame and Series for processing
     X_df = pd.DataFrame(X)
@@ -170,8 +170,8 @@ def downsample_data(X, y):
         downsampled = resample(
             class_data,
             replace=False,              # No replacement to downsample
-            n_samples=min_class_size   # Match minority class size
-            #random_state=random_state
+            n_samples=min_class_size,   # Match minority class size
+            random_state=random_state
         )
         downsampled_data.append(downsampled)
 

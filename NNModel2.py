@@ -7,12 +7,14 @@ import itertools
 if __name__ == "__main__": 
     
     param_grid = {
-        'num_PCA': [0, 2, 5, 10, 15],
-        'epochs': [100],
-        'weight_decay': [0.001, 0.01],
-        'learning_rate': [0.001],
-        'step_gamma': [0.5, 0.9], #Step Size is 20
-        'method': ['p', 'b', 'r'] #Profit/Loss, bins, regression
+        'method': ['r'], #Profit/Loss, bins, regression
+        'num_PCA': [0],
+        'epochs': [20],
+        'weight_decay': [0.001, 0.0001],
+        'learning_rate': [0.01],
+        'delta': [0.1],
+        'dropout_rate': [0.2],
+        'step_gamma': [0.5]
     }
 
 
@@ -32,7 +34,6 @@ if __name__ == "__main__":
     for params in param_combinations:
         # Unpack parameters
         param_dict = dict(zip(param_names, params))
-        print(param_dict)
         
         method = param_dict['method']
 
@@ -41,6 +42,8 @@ if __name__ == "__main__":
         if method == 'b':
             for num_bins in [5, 10, 15, 20]:  # Iterate over num_bins
                 param_dict['num_bins'] = num_bins
+                print(param_dict)
+
                 
                 # Prepare data
                 X_enc, input_size = dm.x_data_prep(X, method, param_dict['num_PCA'])
@@ -57,7 +60,8 @@ if __name__ == "__main__":
                 results.append((param_dict.copy(), loss, accuracy, ))
         else:
             param_dict['num_bins'] = None  # No `num_bins` for other methods
-            
+            print(param_dict)
+
             # Prepare data
             X_enc, input_size = dm.x_data_prep(X, method, param_dict['num_PCA'])
             y_enc, output_size = dm.y_data_prep(y, method, None)
@@ -67,7 +71,8 @@ if __name__ == "__main__":
             loss, accuracy = ms.train_test(
                 input_size, output_size, train_loader, test_loader,
                 method, param_dict['epochs'], param_dict['weight_decay'],
-                param_dict['learning_rate'], param_dict['step_gamma']
+                param_dict['learning_rate'], param_dict['step_gamma'],
+                param_dict['delta']
             )
             
             results.append((param_dict.copy(), loss, accuracy))
@@ -75,3 +80,4 @@ if __name__ == "__main__":
     # Convert results to DataFrame for easy analysis
     results_df = pd.DataFrame(results, columns=['Params', 'Loss', 'Accuracy'])
     print(results_df.sort_values(by='Accuracy', ascending=False))
+    #%%
