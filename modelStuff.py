@@ -52,15 +52,15 @@ def train_model(model, train_loader, criterion, optimizer, method):
 
     for features, labels in train_loader:
         features, labels = features.to(device), labels.to(device)
-
-        if method == 'r':
-            labels = labels.unsqueeze(-1) 
             
         # Reset optimizer to 0
         optimizer.zero_grad()
         
+        if method == 'r':
+            labels = labels.unsqueeze(1)  # Add an extra dimension to match [batch_size, 1]
+
         # Predict and compute model loss
-        outputs = model(features).squeeze(-1)
+        outputs = model(features)
         loss = criterion(outputs, labels)
         total_loss += loss.item()
 
@@ -89,10 +89,10 @@ def test_model(model, test_loader, criterion, method):
             features, labels = features.to(device), labels.to(device)
             
             if method == 'r':
-                labels = labels.unsqueeze(-1) 
-    
+                labels = labels.unsqueeze(1)  # Add an extra dimension to match [batch_size, 1]
+
             # Predict and calculate model loss
-            outputs = model(features).squeeze(-1)
+            outputs = model(features)
             loss = criterion(outputs, labels)
             total_loss += loss.item()
             
@@ -201,9 +201,9 @@ def train_test(input_size, output_size, train_loader, test_loader, method, epoch
     plt.legend()
     plt.show()
     
-    plt.title(f"{method.capitalize()} Model Accuracy\n{param_caption}")
 
     if method == 'p':
+        plt.title(f"{method.capitalize()} Model Accuracy\n{param_caption}")
         plt.ylabel("Accuracy")
         plt.xlabel("Epochs")
         plt.plot(range(epochs), train_percs, label="Train Percentage")
@@ -213,6 +213,7 @@ def train_test(input_size, output_size, train_loader, test_loader, method, epoch
         plt.show()
         
     if method == 'b':
+        plt.title(f"{method.capitalize()} Model Accuracy\n{param_caption}")
         plt.ylabel("Accuracy")
         plt.xlabel("Epochs")
         plt.plot(range(epochs), train_percs, label="Train Percentage")

@@ -7,12 +7,11 @@ import itertools
 if __name__ == "__main__": 
     
     param_grid = {
-        'num_bins': [5, 10, 15, 20],
         'num_PCA': [0, 2, 5, 10, 15],
-        'epochs': [10, 100, 200],
-        'weight_decay': [0.001, 0.01, 0.1],
-        'learning_rate': [0.001, 0.01, 0.1],
-        'step_gamma': [0.5, 0.9, 0.95], #Step Size is 20
+        'epochs': [100],
+        'weight_decay': [0.001, 0.01],
+        'learning_rate': [0.001],
+        'step_gamma': [0.5, 0.9], #Step Size is 20
         'method': ['p', 'b', 'r'] #Profit/Loss, bins, regression
     }
 
@@ -34,28 +33,45 @@ if __name__ == "__main__":
         # Unpack parameters
         param_dict = dict(zip(param_names, params))
         print(param_dict)
-        num_bins = param_dict['num_bins']
-        num_PCA = param_dict['num_PCA']
-        epochs = param_dict['epochs']
-        weight_decay = param_dict['weight_decay']
-        learning_rate = param_dict['learning_rate']
-        step_gamma = param_dict['step_gamma']
+        
         method = param_dict['method']
 
     
-        X_enc, input_size = dm.x_data_prep(X, method, num_PCA)
-        y_enc, output_size = dm.y_data_prep(y, method, num_bins)
-        
-        if method == 'p':
-            # Balance the classes
-            X_enc, y_enc = dm.downsample_data(X_enc,y_enc)
+        # Handle `num_bins` only for 'b' method
+        if method == 'b':
+            for num_bins in [5, 10, 15, 20]:  # Iterate over num_bins
+                param_dict['num_bins'] = num_bins
+                
+                # Prepare data
+                X_enc, input_size = dm.x_data_prep(X, method, param_dict['num_PCA'])
+                y_enc, output_size = dm.y_data_prep(y, method, num_bins)
+                
+                train_loader, test_loader = dm.make_data_loader(X_enc, y_enc, method)
+                
+                loss, accuracy = ms.train_test(
+                    input_size, output_size, train_loader, test_loader,
+                    method, param_dict['epochs'], param_dict['weight_decay'],
+                    param_dict['learning_rate'], param_dict['step_gamma']
+                )
+                
+                results.append((param_dict.copy(), loss, accuracy, ))
+        else:
+            param_dict['num_bins'] = None  # No `num_bins` for other methods
             
-        train_loader, test_loader = dm.make_data_loader(X_enc, y_enc, method)
-        
-        loss, accuracy = ms.train_test(input_size, output_size, train_loader, test_loader, method, epochs, weight_decay, learning_rate, step_gamma)
-        
-        results.append((param_dict, loss, accuracy))
+            # Prepare data
+            X_enc, input_size = dm.x_data_prep(X, method, param_dict['num_PCA'])
+            y_enc, output_size = dm.y_data_prep(y, method, None)
+            
+            train_loader, test_loader = dm.make_data_loader(X_enc, y_enc, method)
+            
+            loss, accuracy = ms.train_test(
+                input_size, output_size, train_loader, test_loader,
+                method, param_dict['epochs'], param_dict['weight_decay'],
+                param_dict['learning_rate'], param_dict['step_gamma']
+            )
+            
+            results.append((param_dict.copy(), loss, accuracy))
 
     # Convert results to DataFrame for easy analysis
-    results_df = pd.DataFrame(results, columns=['Params', 'Accuracy'])
+    results_df = pd.DataFrame(results, columns=['Params', 'Loss', 'Accuracy'])
     print(results_df.sort_values(by='Accuracy', ascending=False))

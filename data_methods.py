@@ -94,7 +94,7 @@ def y_data_prep(y, method, num_bins):
         
     elif method == 'p':
         y_enc = (y['revenue_adj'] > y['budget_adj']).astype(int).values  # Convert to NumPy array
-        output_size = 1
+        output_size = 2
         
     elif method == 'b':
         num_bins = 15
