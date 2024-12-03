@@ -1,27 +1,61 @@
 import pandas as pd
 import data_methods as dm
 import modelStuff as ms
+import itertools
 
 #%%
 if __name__ == "__main__": 
     
-    #method = input('Choose mehtod: Profit/loss(p), Bins(b), Regression(r): ')
-    #Choose mehtod: Profit/loss(p), Bins(b), Regression(r): 
-    method = 'r'
+    param_grid = {
+        'num_bins': [5, 10, 15, 20],
+        'num_PCA': [0, 2, 5, 10, 15],
+        'epochs': [10, 100, 200],
+        'weight_decay': [0.001, 0.01, 0.1],
+        'learning_rate': [0.001, 0.01, 0.1],
+        'step_gamma': [0.5, 0.9, 0.95], #Step Size is 20
+        'method': ['p', 'b', 'r'] #Profit/Loss, bins, regression
+    }
+
+
+    # Generate all combinations of parameters
+    param_combinations = list(itertools.product(*param_grid.values()))
+    param_names = list(param_grid.keys())
+    results = []
     
-    df = pd.read_csv("data/data_more.csv", index_col=0)
-
-    df = df[df['budget_adj'] >= 1_000_000]
-    df = df[df['revenue_adj'] >= 1_000_000]
-
-
+        
+    df = pd.read_csv("data/data_more.csv", index_col=0)    
 
     X = df[['vote_average', 'budget_adj', 'original_language', 'runtime', 'year', 'genres', 'season', 'rating']]
     y = df[['revenue_adj', 'budget_adj']]
 
-    X_enc, input_size = dm.x_data_prep(X)
-    y_enc, output_size = dm.y_data_prep(y, method)
-        
-    train_loader, test_loader = dm.make_data_loader(X_enc, y_enc, method)
+    X = pd.DataFrame(X).reset_index(drop=True)
     
-    ms.train_test(input_size, output_size, train_loader, test_loader, method)
+    for params in param_combinations:
+        # Unpack parameters
+        param_dict = dict(zip(param_names, params))
+        print(param_dict)
+        num_bins = param_dict['num_bins']
+        num_PCA = param_dict['num_PCA']
+        epochs = param_dict['epochs']
+        weight_decay = param_dict['weight_decay']
+        learning_rate = param_dict['learning_rate']
+        step_gamma = param_dict['step_gamma']
+        method = param_dict['method']
+
+    
+        X_enc, input_size = dm.x_data_prep(X, method, num_PCA)
+        y_enc, output_size = dm.y_data_prep(y, method, num_bins)
+        
+        if method == 'p':
+            # Balance the classes
+            X_enc, y_enc = dm.downsample_data(X_enc,y_enc)
+            
+        train_loader, test_loader = dm.make_data_loader(X_enc, y_enc, method)
+        
+        loss, accuracy = ms.train_test(input_size, output_size, train_loader, test_loader, method, epochs, weight_decay, learning_rate, step_gamma)
+        
+        results.append((param_dict, loss, accuracy))
+
+    # Convert results to DataFrame for easy analysis
+    results_df = pd.DataFrame(results, columns=['Params', 'Accuracy'])
+    print(results_df.sort_values(by='Accuracy', ascending=False))

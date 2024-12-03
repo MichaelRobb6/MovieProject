@@ -128,6 +128,7 @@ if __name__ == "__main__":
     X = df[['vote_average', 'budget_adj', 'runtime', 'genres', 'season', 'rating']]
     y = df['revenue_adj']
 
+    X_df = pd.DataFrame(X).reset_index
     X_encoded = data_encoding(X)
 
     #label_encoder = LabelEncoder()
@@ -165,7 +166,7 @@ if __name__ == "__main__":
     train_accs = []
     test_accs = []
     
-    epochs = 100
+    epochs = 50
     for epoch in range(epochs):
         train_loss, train_acc = train_model(nn_model, train_loader)
         test_loss, test_acc = test_model(nn_model, test_loader)
