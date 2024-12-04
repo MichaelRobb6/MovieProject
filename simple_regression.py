@@ -136,14 +136,17 @@ if __name__ == "__main__":
     # Prepare cross-validation
     kf = KFold(n_splits=5, shuffle=True)  # 5-fold cross-validation
     
-    # Create the model
-    model = LinearRegression()
     
     # Perform cross-validation using built-in scoring functions
     # Note: Perform cross-validation on the entire dataset or training data
-    rmse_scores = -cross_val_score(model, X_train, y_train, cv=kf, scoring='neg_root_mean_squared_error')
-    mae_scores = -cross_val_score(model, X_train, y_train, cv=kf, scoring='neg_mean_absolute_error')
+    rmse_scores = -cross_val_score(
+        model, X_train, y_train, cv=kf, scoring='neg_root_mean_squared_error'
+    )
+    mae_scores = -cross_val_score(
+        model, X_train, y_train, cv=kf, scoring='neg_mean_absolute_error'
+    )
     r2_scores = cross_val_score(model, X_train, y_train, cv=kf, scoring='r2')
+
     
     # Print the results
     print(f"RMSE (mean ± std): {rmse_scores.mean():.2e} ± {rmse_scores.std():.2e}")
