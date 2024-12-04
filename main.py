@@ -7,7 +7,7 @@ import itertools
 if __name__ == "__main__": 
     
     param_grid = {
-        'method': ['r','p'], #Profit/Loss, bins, regression
+        'method': ['p','r'], #Profit/Loss, bins, regression
         'num_PCA': [0, 15, 20],
         'epochs': [100],
         'weight_decay': [0.001, 0.0001],
@@ -59,7 +59,7 @@ if __name__ == "__main__":
                 
                 results.append((param_dict.copy(), loss, accuracy, ))
         elif method == 'r':
-            for delta in [0.001, 0.01, 0.05, 0.1, 0.2]:
+            for delta in [0.1, 0.2, 0.5]:
                 param_dict['num_bins'] = None
                 param_dict['hubert_delta'] = delta
                 print(param_dict)
@@ -81,6 +81,7 @@ if __name__ == "__main__":
                 results.append((param_dict.copy(), loss, accuracy, ))
         else:
             param_dict['num_bins'] = None  # No `num_bins` for other methods
+            param_dict['hubert_delta'] = None
             print(param_dict)
 
             # Prepare data
@@ -92,8 +93,8 @@ if __name__ == "__main__":
             loss, accuracy = mm.train_test(
                 input_size, output_size, train_loader, test_loader,
                 method, param_dict['epochs'], param_dict['weight_decay'],
-                param_dict['learning_rate'], param_dict['step_gamma'],
-                param_dict['delta']
+                param_dict['learning_rate'], param_dict['hubert_delta'],
+                param_dict['dropout_rate']
             )
             
             results.append((param_dict.copy(), loss, accuracy))

@@ -176,7 +176,7 @@ def train_test(input_size, output_size, train_loader, test_loader, method, epoch
     
     param_caption = (f"Parameters\n"
                  f"Epochs: {epochs}, Weight Decay: {weight_decay}, "
-                 f"Learning Rate: {lr}, DropourRate: {dropout_rate}, "
+                 f"Learning Rate: {lr}, DropoutRate: {dropout_rate}, "
                  f"IS/PCA:{input_size}")
     
     plt.title(f"{method.capitalize()} Model Loss\n{param_caption}")
