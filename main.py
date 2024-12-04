@@ -1,19 +1,19 @@
 import pandas as pd
 import data_methods as dm
-import modelStuff as ms
+import model_methods as ms
 import itertools
 
 #%%
 if __name__ == "__main__": 
     
     param_grid = {
-        'method': ['r'], #Profit/Loss, bins, regression
+        'method': ['b'], #Profit/Loss, bins, regression
         'num_PCA': [0],
-        'epochs': [20],
-        'weight_decay': [0.001, 0.0001],
-        'learning_rate': [0.01],
+        'epochs': [100],
+        'weight_decay': [0],
+        'learning_rate': [0.001],
         'delta': [0.1],
-        'dropout_rate': [0.2],
+        'dropout_rate': [0],
         'step_gamma': [0.5]
     }
 
@@ -28,8 +28,6 @@ if __name__ == "__main__":
 
     X = df[['vote_average', 'budget_adj', 'original_language', 'runtime', 'year', 'genres', 'season', 'rating']]
     y = df[['revenue_adj', 'budget_adj']]
-
-    X = pd.DataFrame(X).reset_index(drop=True)
     
     for params in param_combinations:
         # Unpack parameters
@@ -66,6 +64,7 @@ if __name__ == "__main__":
             X_enc, input_size = dm.x_data_prep(X, method, param_dict['num_PCA'])
             y_enc, output_size = dm.y_data_prep(y, method, None)
             
+            X_enc, y_enc = dm.downsample_data(X_enc, y_enc, random_state=21321)
             train_loader, test_loader = dm.make_data_loader(X_enc, y_enc, method)
             
             loss, accuracy = ms.train_test(
