@@ -1,10 +1,7 @@
 import streamlit as st
-import numpy as np
 import pandas as pd
 import torch
 from sklearn.preprocessing import OrdinalEncoder
-from NNModel import MovieModel
-import simple_regression as reg
 import joblib
 # Title
 st.title("Movie Revenue Prediction")
