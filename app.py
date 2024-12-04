@@ -4,7 +4,8 @@ import pandas as pd
 import torch
 from sklearn.preprocessing import OrdinalEncoder
 from NNModel import MovieModel
-
+import simple_regression as reg
+import joblib
 # Title
 st.title("Movie Revenue Prediction")
 
@@ -98,7 +99,7 @@ def encode_input(X):
 if st.button("Submit"):
     # Collect inputs into a dictionary
     movie_data = {
-        "budget_adj": np.log(budget*1e6),
+        "budget_adj": budget*1e6,
         "season": season,
         "mpaa_rating": mpaa_rating,
         "vote_average": vote_average,
@@ -109,11 +110,11 @@ if st.button("Submit"):
     movie_encoded = encode_input(movie_data)
     input_data = torch.tensor(movie_encoded.values).float()
     
-    model = MovieModel() 
-    state_dict = torch.load("models/model0.pth")
-    model.load_state_dict(state_dict)
-    model.eval()
-    prediction = model(input_data)
+    # Load the model from the file
+    loaded_model = joblib.load('linear_regression_model.joblib')
+    
+    # Now you can use 'loaded_model' to make predictions
+    prediction = loaded_model.predict(input_data)
     
     # Simulate passing data to a model
     st.subheader("Submitted Data")
