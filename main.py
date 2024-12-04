@@ -1,19 +1,18 @@
 import pandas as pd
 import data_methods as dm
-import modelStuff as ms
+import model_methods as mm
 import itertools
 
 #%%
 if __name__ == "__main__": 
     
     param_grid = {
-        'method': ['r'], #Profit/Loss, bins, regression
-        'num_PCA': [0],
-        'epochs': [20],
+        'method': ['r','p'], #Profit/Loss, bins, regression
+        'num_PCA': [0, 15, 20],
+        'epochs': [100],
         'weight_decay': [0.001, 0.0001],
-        'learning_rate': [0.01],
-        'delta': [0.1],
-        'dropout_rate': [0.2],
+        'learning_rate': [0.001],
+        'dropout_rate': [0.2, 0.3, 0.5],
         'step_gamma': [0.5]
     }
 
@@ -51,10 +50,32 @@ if __name__ == "__main__":
                 
                 train_loader, test_loader = dm.make_data_loader(X_enc, y_enc, method)
                 
-                loss, accuracy = ms.train_test(
+                loss, accuracy = mm.train_test(
                     input_size, output_size, train_loader, test_loader,
                     method, param_dict['epochs'], param_dict['weight_decay'],
-                    param_dict['learning_rate'], param_dict['step_gamma']
+                    param_dict['learning_rate'], param_dict['hubert_delta'],
+                    param_dict['dropout_rate']
+                )
+                
+                results.append((param_dict.copy(), loss, accuracy, ))
+        elif method == 'r':
+            for delta in [0.001, 0.01, 0.05, 0.1, 0.2]:
+                param_dict['num_bins'] = None
+                param_dict['hubert_delta'] = delta
+                print(param_dict)
+
+                
+                # Prepare data
+                X_enc, input_size = dm.x_data_prep(X, method, param_dict['num_PCA'])
+                y_enc, output_size = dm.y_data_prep(y, method, None)
+                
+                train_loader, test_loader = dm.make_data_loader(X_enc, y_enc, method)
+                
+                loss, accuracy = mm.train_test(
+                    input_size, output_size, train_loader, test_loader,
+                    method, param_dict['epochs'], param_dict['weight_decay'],
+                    param_dict['learning_rate'], param_dict['hubert_delta'],
+                    param_dict['dropout_rate']
                 )
                 
                 results.append((param_dict.copy(), loss, accuracy, ))
@@ -68,7 +89,7 @@ if __name__ == "__main__":
             
             train_loader, test_loader = dm.make_data_loader(X_enc, y_enc, method)
             
-            loss, accuracy = ms.train_test(
+            loss, accuracy = mm.train_test(
                 input_size, output_size, train_loader, test_loader,
                 method, param_dict['epochs'], param_dict['weight_decay'],
                 param_dict['learning_rate'], param_dict['step_gamma'],

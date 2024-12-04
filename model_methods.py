@@ -16,10 +16,10 @@ class MovieModel(nn.Module):
         self.layer_3 = nn.Linear(64, 64)
         self.layer_4 = nn.Linear(64, 64)
         self.output = nn.Linear(64, output_size)
-        self.dropout = nn.Dropout(0.2)
         self.method = method
         self.relu = nn.ReLU()
         self.pact = nn.ReLU()
+        self.sigmoid = nn.Sigmoid()
 
     
     def forward(self, x):
@@ -31,7 +31,6 @@ class MovieModel(nn.Module):
             x = self.pact(self.layer_3(x))
             x = self.dropout(x)
             x = self.pact(self.layer_4(x))
-            x = self.dropout(x)
             x = self.output(x)
         elif self.method =='r':
             x = self.relu(self.layer_1(x))
@@ -41,7 +40,7 @@ class MovieModel(nn.Module):
         return x
 
     def set_dropout_rate(self, dr):
-        self.dr = dr
+        self.dropout = nn.Dropout(dr)
 
 def train_model(model, train_loader, criterion, optimizer, method):
     
@@ -108,7 +107,7 @@ def test_model(model, test_loader, criterion, method):
     return average_loss, accuracy
 
 
-def train_test(input_size, output_size, train_loader, test_loader, method, epochs, weight_decay, lr, gamma, delta):
+def train_test(input_size, output_size, train_loader, test_loader, method, epochs, weight_decay, lr, delta, dropout_rate):
 
     train_losses = []
     test_losses = []
@@ -121,25 +120,24 @@ def train_test(input_size, output_size, train_loader, test_loader, method, epoch
     best_epoch_acc = -1
     
     nn_model = MovieModel(input_size, output_size, method).to(device)  
-
+    nn_model.set_dropout_rate(dropout_rate)
+    
     if method == 'r':
-        #criterion = nn.MSELoss()
-        #weight_decay = 0.001
-        criterion = nn.HuberLoss()
+        criterion = nn.HuberLoss(delta = delta)
         optimizer = torch.optim.Adam(nn_model.parameters(), lr=lr, weight_decay=weight_decay)
-        scheduler = StepLR(optimizer, step_size=10, gamma=gamma)
+        scheduler = StepLR(optimizer, step_size=10, gamma=0.5)
 
     elif method == 'p':
         #weight_decay = 0.001
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.Adam(nn_model.parameters(), lr=lr, weight_decay=weight_decay)
-        scheduler = StepLR(optimizer, step_size=20, gamma=gamma)
+        scheduler = StepLR(optimizer, step_size=20, gamma=0.5)
 
     elif method == 'b':
         #weight_decay = 0.001
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.Adam(nn_model.parameters(), lr=lr, weight_decay=weight_decay)
-        scheduler = StepLR(optimizer, step_size=20, gamma=gamma)
+        scheduler = StepLR(optimizer, step_size=20, gamma=0.5)
   
 
     # Perform training loop
@@ -178,7 +176,7 @@ def train_test(input_size, output_size, train_loader, test_loader, method, epoch
     
     param_caption = (f"Parameters\n"
                  f"Epochs: {epochs}, Weight Decay: {weight_decay}, "
-                 f"Learning Rate: {lr}, Gamma: {gamma}, "
+                 f"Learning Rate: {lr}, DropourRate: {dropout_rate}, "
                  f"IS/PCA:{input_size}")
     
     plt.title(f"{method.capitalize()} Model Loss\n{param_caption}")
