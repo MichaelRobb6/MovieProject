@@ -57,7 +57,7 @@ if __name__ == "__main__":
                     param_dict['dropout_rate']
                 )
                 
-                results.append((param_dict.copy(), loss, accuracy, ))
+                results.append((param_dict.copy(), loss, accuracy))
         elif method == 'r':
             for delta in [0.1, 0.2, 0.5]:
                 param_dict['num_bins'] = None
@@ -78,7 +78,7 @@ if __name__ == "__main__":
                     param_dict['dropout_rate']
                 )
                 
-                results.append((param_dict.copy(), loss, accuracy, ))
+                results.append((param_dict.copy(), loss, accuracy))
         else:
             param_dict['num_bins'] = None  # No `num_bins` for other methods
             param_dict['hubert_delta'] = None
