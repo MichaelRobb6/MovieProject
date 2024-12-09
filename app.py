@@ -1,127 +1,67 @@
 import streamlit as st
-import numpy as np
-import pandas as pd
+from PIL import Image
 import torch
-from sklearn.preprocessing import OrdinalEncoder
-from NNModel import MovieModel
+from torchvision import transforms
+import io
 
-# Title
-st.title("Movie Revenue Prediction")
-
-# Input: Budget
-budget = st.number_input("Enter the movie budget (in millions):", min_value=0.0, step=0.01)
-
-# Input Genres
-genres = [
-    "Action", "Adventure", "Animation", "Comedy", "Crime", "Documentary",
-    "Drama", "Family", "Fantasy", "History", "Horror", "Music",
-    "Mystery", "Romance", "Science Fiction", "TV Movie", "Thriller", "War", "Western"
-]
-
-# Allow the user to pick genres with a maximum of 4 selections
-selected_genres = st.multiselect(
-    "Pick up to 4 genres:",
-    genres,
-    [],
-)
-
-# Input: Season
-season = st.selectbox(
-    "Select the season of release:",
-    ["Winter", "Spring", "Summer", "Fall"]
-)
-
-# Input: MPAA Rating
-mpaa_rating = st.selectbox(
-    "Select the MPAA rating:",
-    ["G", "PG", "PG-13", "R", "NC-17", "NR"]
-)
-
-# Input: Quality
-vote_average = st.slider(
-    "Rate the quality of the movie on a scale of 1 to 10:",
-    min_value=1,
-    max_value=10,
-    value=5
-)
-
-# Input: Runtime
-runtime = st.number_input(
-    "Enter the runtime of the movie (in minutes):",
-    min_value=60,
-    max_value=240,
-    step=1
-)
-
-def encode_input(X):
-    
-    # Convert movie_data to a DataFrame for processing
-    df = pd.DataFrame([X])
-    
-    # One-Hot Encode 'genres'
-    df_genres = df['genres'].apply(lambda x: pd.Series(1, index=x)).fillna(0)
-    df = pd.concat([df.drop('genres', axis=1), df_genres], axis=1)
-    
-    # Initialize OrdinalEncoder
-    ordinal_encoder = OrdinalEncoder(categories=[
-        ['Winter', 'Spring', 'Summer', 'Fall'],  # Expected order for 'season'
-        ['G', 'PG', 'PG-13', 'R', 'NC-17','NR']       # Expected order for 'mpaa_rating'
-    ])
-    
-    # Apply OrdinalEncoder to 'season' and 'mpaa_rating'
-    df[['season_encoded', 'rating_encoded']] = ordinal_encoder.fit_transform(
-        df[['season', 'mpaa_rating']]
-    )
-    
-    # Drop original 'season' and 'mpaa_rating' columns
-    df = df.drop(['season', 'mpaa_rating'], axis=1)
-    
-    # Define the model's expected features
-    expected_features = [
-        'vote_average', 'budget_adj', 'runtime', 'Action', 'Adventure', 'Animation',
-        'Comedy', 'Crime', 'Documentary', 'Drama', 'Family', 'Fantasy', 'History',
-        'Horror', 'Music', 'Mystery', 'Romance', 'Science Fiction', 'TV Movie',
-        'Thriller', 'War', 'Western', 'season_encoded', 'rating_encoded'
-    ]
-    
-    # Add missing columns with default value 0
-    for feature in expected_features:
-        if feature not in df.columns:
-            df[feature] = 0
-            
-    df = df[expected_features]
-    
-    return df
-
-
-# Submit Button
-if st.button("Submit"):
-    # Collect inputs into a dictionary
-    movie_data = {
-        "budget_adj": np.log(budget*1e6),
-        "season": season,
-        "mpaa_rating": mpaa_rating,
-        "vote_average": vote_average,
-        "runtime": runtime,
-        "genres": selected_genres
-    }
-
-    movie_encoded = encode_input(movie_data)
-    input_data = torch.tensor(movie_encoded.values).float()
-    
-    model = MovieModel() 
-    state_dict = torch.load("models/model0.pth")
-    model.load_state_dict(state_dict)
+# Load your pre-trained model
+@st.cache_resource
+def load_model():
+    model = torch.load("best_model.pth", map_location=torch.device('cpu'))  # Replace with your model's path
     model.eval()
-    prediction = model(input_data)
-    
-    # Simulate passing data to a model
-    st.subheader("Submitted Data")
-    st.write(movie_encoded)
-    #st.write(torch.exp(prediction).item())
+    return model
 
-    formated_val = '{:,}'.format(torch.exp(prediction).item())
-    # Example placeholder for model prediction or processing
-    # Replace this with your actual model code
-    # st.success('You suck mad butt and your idea for a New Girl movie would stink. I know that\'s what you wanted to make')
-    st.success(f'Your movie is expected to make ${formated_val}')
+model = load_model()
+
+# Preprocessing function
+def preprocess_image(image):
+    preprocess = transforms.Compose([
+        transforms.Resize((224, 224)),  # Adjust size to your model's input dimensions
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # Replace with your model's normalization if needed
+    ])
+    return preprocess(image).unsqueeze(0)  # Add batch dimension
+
+# Postprocessing function
+def postprocess_output(output_tensor):
+    output_image = output_tensor.squeeze(0).permute(1, 2, 0)  # Remove batch dimension and reorder channels
+    output_image = output_image.detach().numpy()
+    output_image = (output_image - output_image.min()) / (output_image.max() - output_image.min())  # Normalize to [0, 1]
+    output_image = (output_image * 255).astype("uint8")  # Convert to uint8
+    return Image.fromarray(output_image)
+
+# Streamlit app
+st.title("Model-Based Image Processing App")
+st.write("Upload an image to process it through a trained model!")
+
+uploaded_file = st.file_uploader("Choose an image", type=["png", "jpg", "jpeg"])
+
+if uploaded_file is not None:
+    # Display the uploaded image
+    input_image = Image.open(uploaded_file).convert("RGB")
+    st.image(input_image, caption="Uploaded Image", use_column_width=True)
+    
+    if st.button("Process Image"):
+        # Preprocess the image
+        input_tensor = preprocess_image(input_image)
+        
+        # Pass the image through the model
+        with torch.no_grad():
+            output_tensor = model(input_tensor)
+        
+        # Postprocess the output
+        processed_image = postprocess_output(output_tensor)
+        
+        # Display the processed image
+        st.image(processed_image, caption="Processed Image", use_column_width=True)
+        
+        # Download option
+        buf = io.BytesIO()
+        processed_image.save(buf, format="PNG")
+        buf.seek(0)
+        st.download_button(
+            label="Download Processed Image",
+            data=buf,
+            file_name="processed_image.png",
+            mime="image/png"
+        )
